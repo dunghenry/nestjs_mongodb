@@ -1,82 +1,43 @@
-import { ICar } from "./car.controller";
-import { Injectable } from "@nestjs/common";
-import { cars } from "./car.data";
+import { Injectable, HttpException } from "@nestjs/common";
+import mongoose, { Model } from "mongoose";
+import { InjectModel } from "@nestjs/mongoose";
+import { CarDto } from "./car.dto";
+import { ICar } from "./interfaces/car.interface";
 @Injectable()
 export class CarService {
-    private cars = cars;
-    public async getCars() {
-        return {
-            status: 200,
-            data: this.cars,
-        };
-    }
-    public async postCar(car) {
-        const newCar = {
-            id: Math.floor(Math.random() * 100),
-            ...car,
-        };
-        this.cars.push(newCar);
-        return {
-            status: 200,
-            message: "Add car successfully!",
-            car,
-            data: this.cars,
-        };
-    }
-    public async getCarById(id: string) {
-        const car = this.cars.find((car) => car.id === +id);
-        if (car) {
-            return {
-                status: 200,
-                data: car,
-            };
-        } else {
-            return {
-                status: 404,
-                message: "Car not found",
-            };
+    constructor(@InjectModel("Car") private readonly carModel: Model<ICar>) {}
+    public async getCars(): Promise<CarDto[]> {
+        const cars = await this.carModel.find().exec();
+        if (!cars) {
+            throw new HttpException("Not Found", 404);
         }
+        return cars;
     }
-    public async deleteCarById(id: string) {
-        const car = this.cars.find((car) => car.id === +id);
-        if (car) {
-            const data = this.cars.filter((car) => car.id !== +id);
-            this.cars = data;
-            return {
-                status: 200,
-                message: "Deleted car successfully!",
-                data,
-            };
-        } else {
-            return {
-                status: 404,
-                message: "Car not found",
-            };
-        }
+    public async postCar(myCar: CarDto) {
+        const car = await new this.carModel(myCar);
+        return car.save();
     }
-    public async updateCarById(id: string, updateCar: ICar) {
-        const car = this.cars.find((car) => car.id === +id);
-        if (car) {
-            const data = this.cars.map((car) => {
-                if (car.id === +id) {
-                    car.brand = updateCar.brand;
-                    car.color = updateCar.color;
-                    car.model = updateCar.model;
-                }
-                return car;
-            });
-            const car = this.cars.find((car) => car.id === +id);
-            return {
-                status: 200,
-                data,
-                car,
-                message: "Updated car successfully!",
-            };
-        } else {
-            return {
-                status: 404,
-                message: "Car not found",
-            };
+    public async getCarById(id: mongoose.Types.ObjectId): Promise<CarDto> {
+        const car = await this.carModel.findById(id).exec();
+        if (!car) {
+            throw new HttpException("Not Found", 404);
         }
+        return car;
+    }
+    public async deleteCarById(id: mongoose.Types.ObjectId) {
+        await this.carModel.findByIdAndDelete(id);
+        return "Deleted car successfully!";
+    }
+    public async updateCarById(
+        id: mongoose.Types.ObjectId,
+        updateCar: CarDto,
+    ): Promise<CarDto> {
+        const car = await this.carModel.findByIdAndUpdate(id, updateCar, {
+            new: true,
+        });
+        if (!car) {
+            throw new HttpException("Not Found", 404);
+        }
+        return car;
     }
 }

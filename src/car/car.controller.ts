@@ -8,11 +8,8 @@ import {
     Put,
 } from "@nestjs/common";
 import { CarService } from "./car.service";
-export interface ICar {
-    brand: string;
-    color: string;
-    model: string;
-}
+import { CarDto } from "./car.dto";
+import mongoose from "mongoose";
 @Controller("cars")
 export class CarController {
     constructor(private readonly carService: CarService) {}
@@ -21,19 +18,22 @@ export class CarController {
         return await this.carService.getCars();
     }
     @Post()
-    async postCar(@Body() newCar: ICar) {
+    async postCar(@Body() newCar: CarDto) {
         return await this.carService.postCar(newCar);
     }
     @Get(":id")
-    async getCar(@Param("id") id: string) {
+    async getCar(@Param("id") id: mongoose.Types.ObjectId) {
         return await this.carService.getCarById(id);
     }
     @Delete(":id")
-    async deleteCarById(@Param("id") id: string) {
+    async deleteCarById(@Param("id") id: mongoose.Types.ObjectId) {
         return await this.carService.deleteCarById(id);
     }
     @Put(":id")
-    async updateCarById(@Param("id") id: string, @Body() updateCar: ICar) {
+    async updateCarById(
+        @Param("id") id: mongoose.Types.ObjectId,
+        @Body() updateCar: CarDto,
+    ) {
         return await this.carService.updateCarById(id, updateCar);
     }
 }
