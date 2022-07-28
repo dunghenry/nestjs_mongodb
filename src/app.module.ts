@@ -4,12 +4,10 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { CarModule } from "./car/car.module";
 import { MongooseModule } from "@nestjs/mongoose";
-require("dotenv").config({ path: ".env" });
+require("dotenv").config({ path: ".env.dev" });
 @Module({
     imports: [
-        MongooseModule.forRoot(
-            "mongodb+srv://trandung:trandung@cluster0.ykkgz.mongodb.net/Car_Manager?retryWrites=true&w=majority",
-        ),
+        MongooseModule.forRoot(process.env.MONGODB_URL),
         HttpModule,
         CarModule,
     ],
