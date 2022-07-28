@@ -6,38 +6,43 @@ import { ICar } from "./interfaces/car.interface";
 @Injectable()
 export class CarService {
     constructor(@InjectModel("Car") private readonly carModel: Model<ICar>) {}
-    public async getCars(): Promise<CarDto[]> {
-        const cars = await this.carModel.find().exec();
+    async getCars(): Promise<CarDto[]> {
+        const cars = await this.carModel.find();
         if (!cars) {
             throw new HttpException("Not Found", 404);
         }
         return cars;
     }
-    public async postCar(myCar: CarDto) {
+    async postCar(myCar: CarDto) {
         const car = await new this.carModel(myCar);
         return car.save();
     }
-    public async getCarById(id: mongoose.Types.ObjectId): Promise<CarDto> {
-        const car = await this.carModel.findById(id).exec();
+    async getCarById(id: mongoose.Types.ObjectId): Promise<CarDto> {
+        const car = await this.carModel.findOne({ _id: id });
         if (!car) {
             throw new HttpException("Not Found", 404);
         }
         return car;
     }
-    public async deleteCarById(id: mongoose.Types.ObjectId) {
-        await this.carModel.findByIdAndDelete(id);
+    async deleteCarById(id: mongoose.Types.ObjectId): Promise<string> {
+        // await this.carModel.findByIdAndDelete(id);
+        const car = await this.carModel.deleteOne({ _id: id });
+        if (car.deletedCount === 0) {
+            throw new HttpException("Not Found", 404);
+        }
         return "Deleted car successfully!";
     }
-    public async updateCarById(
+    async updateCarById(
         id: mongoose.Types.ObjectId,
         updateCar: CarDto,
-    ): Promise<CarDto> {
-        const car = await this.carModel.findByIdAndUpdate(id, updateCar, {
-            new: true,
-        });
-        if (!car) {
+    ): Promise<string> {
+        // const car = await this.carModel.findByIdAndUpdate(id, updateCar, {
+        //     new: true,
+        // });
+        const car = await this.carModel.updateOne({ _id: id }, updateCar);
+        if (car.modifiedCount === 0) {
             throw new HttpException("Not Found", 404);
         }
-        return car;
+        return "Updated car successfully!";
     }
 }
